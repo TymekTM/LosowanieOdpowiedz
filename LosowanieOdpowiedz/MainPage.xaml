@@ -1,0 +1,35 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:LosowanieOdpowiedz"
+             x:Class="LosowanieOdpowiedz.MainPage"
+             x:Name="Page">
+
+    <StackLayout>
+        <Entry x:Name="StudentNameEntry" Placeholder="Wpisz imię i nazwisko ucznia" />
+        <Entry x:Name="ClassEntry" Placeholder="Wpisz nazwę klasy" />
+        <Button x:Name="AddStudentButton" Text="Dodaj Studenta" Clicked="OnAddStudentButtonClicked" />
+        <Button x:Name="LoadStudentsButton" Text="Załaduj Studentów" Clicked="OnLoadStudentsButtonClicked" />
+        <Button x:Name="DrawStudentButton" Text="Wylosuj Studenta" Clicked="OnDrawStudentButtonClicked" />
+        <Label x:Name="HappyNumberLabel" Text="Happy Number: " HorizontalOptions="Center" />
+        
+        <CollectionView x:Name="StudentsCollectionView">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="{Binding Id}" WidthRequest="50" />
+                        <Label Text="{Binding Name}" HorizontalOptions="StartAndExpand" />
+                        <Label Text="{Binding Class}" WidthRequest="100" />
+                        <CheckBox IsChecked="{Binding IsPresent}" CheckedChanged="CheckBox_CheckedChanged"/>
+                        <Button Text="Edytuj"
+                BackgroundColor="#0078D7"
+                TextColor="White"
+                WidthRequest="100"
+                Clicked="OnEditButtonClicked" />
+                    </StackLayout>
+                </DataTemplate>
+
+
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </StackLayout>
+</ContentPage>
