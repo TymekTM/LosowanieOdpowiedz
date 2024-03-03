@@ -25,7 +25,8 @@ namespace LosowanieOdpowiedz.Services
 
         public void LoadDefaultStudentsList()
         {
-            students = FileService.LoadStudentsList().ToList();
+            var studentsDict = FileService.LoadStudentsList();
+            students = studentsDict.SelectMany(pair => pair.Value).ToList();
         }
 
         public void UpdateStudentPresence(int studentId, bool isPresent)
@@ -40,17 +41,17 @@ namespace LosowanieOdpowiedz.Services
 
         public void AddStudent(Student student)
         {
-            if (students.Any())
+            if (string.IsNullOrEmpty(student.Class))
             {
-                student.Id = students.Max(s => s.Id) + 1;
+                throw new InvalidOperationException("Klasa studenta nie może być pusta.");
             }
-            else
-            {
-                student.Id = 1;
-            }
+
+            var classStudents = students.Where(s => s.Class == student.Class).ToList();
+            student.Id = classStudents.Any() ? classStudents.Max(s => s.Id) + 1 : 1;
             students.Add(student);
             FileService.SaveStudentsList(students);
         }
+
 
 
         public bool EditStudent(string currentName, string newName, bool? isPresent = null)
@@ -67,9 +68,9 @@ namespace LosowanieOdpowiedz.Services
         }
 
 
-        public Student DrawStudent()
+        public Student DrawStudent(string klasa)
         {
-            var eligibleStudents = students.Where(s => s.IsPresent && s.Id != HappyNumber && !recentlyDrawnStudents.Contains(s)).ToList();
+            var eligibleStudents = students.Where(s => s.IsPresent && s.Id != HappyNumber && !recentlyDrawnStudents.Contains(s) && s.Class == klasa).ToList();
 
             if (eligibleStudents.Count == 0) return null;
 
@@ -100,7 +101,17 @@ namespace LosowanieOdpowiedz.Services
         }
         public IEnumerable<Student> LoadStudents(string filePath)
         {
-            return FileService.LoadStudentsList(filePath);
+            var studentsDict = FileService.LoadStudentsFromFile(filePath);
+            return studentsDict.SelectMany(pair => pair.Value);
+        }
+        public IEnumerable<string> GetAllClasses()
+        {
+            return students.Select(s => s.Class).Distinct();
+        }
+
+        public IEnumerable<Student> GetStudentsByClass(string className)
+        {
+            return students.Where(student => student.Class == className);
         }
 
     }

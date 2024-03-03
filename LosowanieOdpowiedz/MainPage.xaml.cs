@@ -20,8 +20,24 @@ namespace LosowanieOdpowiedz
             studentService = new StudentService();
             Students = new ObservableCollection<Student>(studentService.GetAllStudents());
             StudentsCollectionView.ItemsSource = Students;
-            LoadDefaultList();
             HappyNumberLabel.Text = $"Szczęśliwy Numerek: {studentService.HappyNumber}";
+
+            LoadClassesIntoPicker();
+        }
+
+        private void LoadClassesIntoPicker()
+        {
+            ClassPicker.ItemsSource = studentService.GetAllClasses().ToList();
+        }
+
+
+
+        private void ClassPicker_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (ClassPicker.SelectedIndex != -1)
+            {
+                RefreshStudentsList();
+            }
         }
 
 
@@ -29,9 +45,9 @@ namespace LosowanieOdpowiedz
         {
             var customFileType = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
         {
-            { DevicePlatform.WinUI, new[] { ".json" } },
-            { DevicePlatform.Android, new[] { "application/json" } },
-            { DevicePlatform.iOS, new[] { "public.json" } }
+            { DevicePlatform.WinUI, new[] { ".txt" } },
+            { DevicePlatform.Android, new[] { "text/txt" } },
+            { DevicePlatform.iOS, new[] { "public.text" } }
         });
 
             var options = new PickOptions
@@ -61,7 +77,7 @@ namespace LosowanieOdpowiedz
 
         private void OnDrawStudentButtonClicked(object sender, EventArgs e)
         {
-            var drawnStudent = studentService.DrawStudent();
+            var drawnStudent = studentService.DrawStudent((string)ClassPicker.SelectedItem);
             if (drawnStudent != null)
             {
                 DisplayAlert("Wylosowany Student", $"{drawnStudent.Name}", "OK");
@@ -75,29 +91,38 @@ namespace LosowanieOdpowiedz
 
         private void RefreshStudentsList()
         {
+            if (ClassPicker.SelectedItem == null)
+                return;
+
+            var selectedClass = ClassPicker.SelectedItem.ToString();
             Students.Clear();
-            var allStudents = studentService.GetAllStudents();
-            foreach (var student in allStudents)
+            var filteredStudents = studentService.GetStudentsByClass(selectedClass).ToList();
+            foreach (var student in filteredStudents)
             {
                 Students.Add(student);
             }
         }
 
+
         private void OnAddStudentButtonClicked(object sender, EventArgs e)
         {
             var studentName = StudentNameEntry.Text?.Trim();
-            if (!string.IsNullOrEmpty(studentName))
+            var studentClass = ClassEntry.Text?.Trim(); 
+
+            if (!string.IsNullOrEmpty(studentName) && !string.IsNullOrEmpty(studentClass))
             {
-                var newStudent = new Student { Name = studentName, IsPresent = true };
+                var newStudent = new Student { Name = studentName, Class = studentClass, IsPresent = true };
                 studentService.AddStudent(newStudent);
                 Students.Add(newStudent);
                 StudentNameEntry.Text = string.Empty;
+                ClassEntry.Text = string.Empty;
             }
             else
             {
-                DisplayAlert("Błąd", "Musisz wpisać imię i nazwisko ucznia.", "OK");
+                DisplayAlert("Błąd", "Musisz wpisać imię, nazwisko ucznia oraz klasę.", "OK");
             }
         }
+
         public async Task EditStudent(Student student)
         {
             System.Diagnostics.Debug.WriteLine($"Edit command executed for student: {student.Name}");
@@ -108,7 +133,6 @@ namespace LosowanieOdpowiedz
                 bool isEdited = studentService.EditStudent(student.Name, newName, student.IsPresent);
                 if (isEdited)
                 {
-                    // If the student was successfully edited, update the UI accordingly.
                     var index = Students.IndexOf(student);
                     if (index != -1)
                     {
@@ -117,7 +141,6 @@ namespace LosowanieOdpowiedz
                 }
                 else
                 {
-                    // Handle the error case where the student wasn't found for editing.
                     await DisplayAlert("Błąd", "Nie znaleziono studenta do edycji.", "OK");
                 }
             }
@@ -126,9 +149,8 @@ namespace LosowanieOdpowiedz
 
         private async void LoadDefaultList()
         {
-            // Assuming 'default_students.json' is the name of the default file and it's an EmbeddedResource
             var assembly = IntrospectionExtensions.GetTypeInfo(typeof(MainPage)).Assembly;
-            Stream stream = assembly.GetManifestResourceStream($"{assembly.GetName().Name}.students.json");
+            Stream stream = assembly.GetManifestResourceStream($"{assembly.GetName().Name}.students.txt");
 
             if (stream != null)
             {
@@ -151,7 +173,6 @@ namespace LosowanieOdpowiedz
                 await EditStudent(student);
             }
         }
-
 
     }
 }
