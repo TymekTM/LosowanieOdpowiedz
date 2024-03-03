@@ -8,10 +8,10 @@ namespace LosowanieOdpowiedz.Services
     public static class FileService
     {
         private static string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "LosowanieOdpowiedz");
-        private static string filePath = Path.Combine(folderPath, "students.json");
+        private static string filePath = Path.Combine(folderPath, "students.txt");
 
         static FileService()
-        {          
+        {
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath);
@@ -20,22 +20,39 @@ namespace LosowanieOdpowiedz.Services
 
         public static void SaveStudentsList(IEnumerable<Student> students)
         {
-            var jsonString = JsonSerializer.Serialize(students);
+            var studentsByClass = new Dictionary<string, List<Student>>();
+            foreach (var student in students)
+            {
+                if (!studentsByClass.ContainsKey(student.Class))
+                {
+                    studentsByClass[student.Class] = new List<Student>();
+                }
+                studentsByClass[student.Class].Add(student);
+            }
+
+            var jsonString = JsonSerializer.Serialize(studentsByClass, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(filePath, jsonString);
         }
 
-        public static IEnumerable<Student> LoadStudentsList()
+        public static Dictionary<string, List<Student>> LoadStudentsList()
         {
-            if (!File.Exists(filePath)) return new List<Student>();
+            if (!File.Exists(filePath)) return new Dictionary<string, List<Student>>();
             var jsonString = File.ReadAllText(filePath);
-            return JsonSerializer.Deserialize<IEnumerable<Student>>(jsonString);
+            return JsonSerializer.Deserialize<Dictionary<string, List<Student>>>(jsonString) ?? new Dictionary<string, List<Student>>();
         }
 
-        public static IEnumerable<Student> LoadStudentsList(string filePath)
+        public static Dictionary<string, List<Student>> LoadStudentsFromFile(string customFilePath)
         {
-            if (!File.Exists(filePath)) return new List<Student>();
-            var jsonString = File.ReadAllText(filePath);
-            return JsonSerializer.Deserialize<IEnumerable<Student>>(jsonString) ?? new List<Student>();
+            if (!File.Exists(customFilePath)) return new Dictionary<string, List<Student>>();
+            var jsonString = File.ReadAllText(customFilePath);
+            if (jsonString == string.Empty)
+            {
+                return new Dictionary<string, List<Student>>();
+            }
+            else
+            {
+                return JsonSerializer.Deserialize<Dictionary<string, List<Student>>>(jsonString) ?? new Dictionary<string, List<Student>>();
+            }
         }
 
     }

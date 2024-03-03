@@ -11,7 +11,9 @@
         <Button x:Name="LoadStudentsButton" Text="Załaduj Studentów" Clicked="OnLoadStudentsButtonClicked" />
         <Button x:Name="DrawStudentButton" Text="Wylosuj Studenta" Clicked="OnDrawStudentButtonClicked" />
         <Label x:Name="HappyNumberLabel" Text="Happy Number: " HorizontalOptions="Center" />
-        
+
+        <Picker x:Name="ClassPicker" Title="Wybierz klasę" SelectedIndexChanged="ClassPicker_SelectedIndexChanged" />
+
         <CollectionView x:Name="StudentsCollectionView">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
