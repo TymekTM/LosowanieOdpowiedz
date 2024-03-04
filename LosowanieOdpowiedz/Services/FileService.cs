@@ -55,5 +55,11 @@ namespace LosowanieOdpowiedz.Services
             }
         }
 
+        public static void UpdateFilePath(string newFilePath)
+        {
+            filePath = newFilePath;
+        }
+
+
     }
 }

@@ -27,10 +27,20 @@ namespace LosowanieOdpowiedz
 
         private void LoadClassesIntoPicker()
         {
-            ClassPicker.ItemsSource = studentService.GetAllClasses().ToList();
+            var classes = studentService.GetAllClasses().ToList();
+            var currentClasses = ClassPicker.ItemsSource as List<string> ?? new List<string>();
+
+            if (!classes.SequenceEqual(currentClasses))
+            {
+                ClassPicker.ItemsSource = classes;
+            }
         }
 
 
+        private void ClassPicker_Clicked(object sender, EventArgs e)
+        {
+            LoadClassesIntoPicker();
+        }
 
         private void ClassPicker_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -59,13 +69,19 @@ namespace LosowanieOdpowiedz
             var result = await FilePicker.PickAsync(options);
             if (result != null)
             {
-                Students.Clear();
+                studentService.ResetState();
                 var loadedStudents = studentService.LoadStudents(result.FullPath);
+                Students.Clear();
                 foreach (var student in loadedStudents)
                 {
                     Students.Add(student);
                 }
+                FileService.UpdateFilePath(result.FullPath);
+
+                LoadClassesIntoPicker(); 
+                RefreshStudentsList();
             }
+
         }
         private void CheckBox_CheckedChanged(object sender, CheckedChangedEventArgs e)
         {
@@ -91,15 +107,18 @@ namespace LosowanieOdpowiedz
 
         private void RefreshStudentsList()
         {
-            if (ClassPicker.SelectedItem == null)
-                return;
+            if (ClassPicker.SelectedItem == null) return;
 
             var selectedClass = ClassPicker.SelectedItem.ToString();
-            Students.Clear();
             var filteredStudents = studentService.GetStudentsByClass(selectedClass).ToList();
-            foreach (var student in filteredStudents)
+
+            if (!filteredStudents.SequenceEqual(Students))
             {
-                Students.Add(student);
+                Students.Clear();
+                foreach (var student in filteredStudents)
+                {
+                    Students.Add(student);
+                }
             }
         }
 
@@ -116,6 +135,9 @@ namespace LosowanieOdpowiedz
                 Students.Add(newStudent);
                 StudentNameEntry.Text = string.Empty;
                 ClassEntry.Text = string.Empty;
+
+                LoadClassesIntoPicker();
+                RefreshStudentsList();
             }
             else
             {
@@ -142,26 +164,6 @@ namespace LosowanieOdpowiedz
                 else
                 {
                     await DisplayAlert("Błąd", "Nie znaleziono studenta do edycji.", "OK");
-                }
-            }
-        }
-
-
-        private async void LoadDefaultList()
-        {
-            var assembly = IntrospectionExtensions.GetTypeInfo(typeof(MainPage)).Assembly;
-            Stream stream = assembly.GetManifestResourceStream($"{assembly.GetName().Name}.students.txt");
-
-            if (stream != null)
-            {
-                using (var reader = new StreamReader(stream))
-                {
-                    var fileContents = await reader.ReadToEndAsync();
-                    var defaultStudents = JsonConvert.DeserializeObject<List<Student>>(fileContents);
-                    foreach (var student in defaultStudents)
-                    {
-                        Students.Add(student);
-                    }
                 }
             }
         }

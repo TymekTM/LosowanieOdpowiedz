@@ -35,9 +35,9 @@ namespace LosowanieOdpowiedz.Services
             if (student != null)
             {
                 student.IsPresent = isPresent;
-                FileService.SaveStudentsList(students); 
+                FileService.SaveStudentsList(students);
+            }
         }
-    }
 
         public void AddStudent(Student student)
         {
@@ -51,6 +51,7 @@ namespace LosowanieOdpowiedz.Services
             students.Add(student);
             FileService.SaveStudentsList(students);
         }
+
 
 
 
@@ -87,6 +88,35 @@ namespace LosowanieOdpowiedz.Services
             return drawnStudent;
         }
 
+        public bool EditStudentClass(int studentId, string newClass)
+        {
+            var student = students.FirstOrDefault(s => s.Id == studentId);
+            if (student != null)
+            {
+                student.Class = newClass;
+                FileService.SaveStudentsList(students);
+                return true;
+            }
+            return false;
+        }
+
+        public bool RemoveStudent(int studentId)
+        {
+            var student = students.FirstOrDefault(s => s.Id == studentId);
+            if (student != null)
+            {
+                students.Remove(student);
+                FileService.SaveStudentsList(students);
+                return true;
+            }
+            return false;
+        }
+
+        public void ReplaceStudentsList(IEnumerable<Student> newStudentsList)
+        {
+            students = newStudentsList.ToList();
+            FileService.SaveStudentsList(students);
+        }
 
 
         public List<Student> GetAllStudents()
@@ -112,6 +142,12 @@ namespace LosowanieOdpowiedz.Services
         public IEnumerable<Student> GetStudentsByClass(string className)
         {
             return students.Where(student => student.Class == className);
+        }
+
+        public void ResetState()
+        {
+            students.Clear(); 
+            recentlyDrawnStudents.Clear(); 
         }
 
     }
